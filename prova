@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Escape Room: L'avventura</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+        }
+        h1 {
+            margin-top: 20px;
+            font-size: 2.5em;
+        }
+        #gameContainer {
+            padding: 20px;
+        }
+        #timer {
+            font-size: 2em;
+            color: #ff0000;
+            margin-top: 10px;
+        }
+        #question {
+            margin: 30px;
+            font-size: 1.8em;
+        }
+        #answerInput {
+            font-size: 1.2em;
+            padding: 10px;
+            margin-top: 10px;
+            width: 80%;
+            max-width: 400px;
+        }
+        #submitButton {
+            padding: 10px 20px;
+            background-color: green;
+            border: none;
+            color: white;
+            font-size: 1.5em;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        #submitButton:hover {
+            background-color: darkgreen;
+        }
+        #resultMessage {
+            font-size: 1.5em;
+            margin-top: 20px;
+        }
+        #nextButton {
+            padding: 10px 20px;
+            background-color: blue;
+            color: white;
+            font-size: 1.5em;
+            cursor: pointer;
+            display: none;
+            margin-top: 20px;
+        }
+        #nextButton:hover {
+            background-color: darkblue;
+        }
+        .hint {
+            font-size: 1em;
+            color: #ffcc00;
+            margin-top: 10px;
+            cursor: pointer;
+        }
+        #history {
+            font-size: 1.2em;
+            margin-top: 20px;
+            color: #aaa;
+        }
+        #exitButton {
+            padding: 10px 20px;
+            background-color: red;
+            color: white;
+            font-size: 1.2em;
+            cursor: pointer;
+            display: none;
+            margin-top: 20px;
+        }
+        #exitButton:hover {
+            background-color: darkred;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="gameContainer">
+        <h1>Escape Room: L'avventura</h1>
+        <div id="timer"></div>
+        <div id="question"></div>
+        <input type="text" id="answerInput" placeholder="Scrivi la risposta..." />
+        <button id="submitButton" onclick="checkAnswer()">Invia Risposta</button>
+        <div id="resultMessage"></div>
+        <button id="nextButton" onclick="nextRoom()">Vai alla stanza successiva</button>
+        <div id="history"></div>
+        <button id="exitButton" onclick="exitGame()">Esci dal gioco</button>
+        <div class="hint" onclick="showHint()">Hai bisogno di un suggerimento?</div>
+    </div>
+
+    <script>
+        // Variabili di gioco
+        let timer = 600; // 10 minuti
+        let timerInterval;
+        let currentRoom = 1;
+        let isGameOver = false;
+        let history = [];
+
+        // Funzione per avviare il timer
+        function startTimer() {
+            timerInterval = setInterval(function() {
+                if (timer <= 0) {
+                    clearInterval(timerInterval);
+                    endGame("Tempo scaduto! Hai perso.");
+                } else {
+                    timer--;
+                    document.getElementById("timer").innerText = `Tempo rimanente: ${Math.floor(timer / 60)}:${timer % 60}`;
+                }
+            }, 1000);
+        }
+
+        // Funzione per terminare il gioco
+        function endGame(message) {
+            isGameOver = true;
+            document.getElementById("resultMessage").innerText = message;
+            document.getElementById("submitButton").disabled = true;
+            document.getElementById("answerInput").disabled = true;
+            document.getElementById("exitButton").style.display = "inline-block";
+        }
+
+        // Funzione per controllare la risposta
+        function checkAnswer() {
+            if (isGameOver) return;
+            const answer = document.getElementById("answerInput").value.trim().toLowerCase();
+            const correctAnswers = getCorrectAnswer();
+
+            if (correctAnswers.includes(answer)) {
+                document.getElementById("resultMessage").innerText = "Risposta corretta!";
+                document.getElementById("nextButton").style.display = "inline-block";
+                history.push(`Stanza ${currentRoom}: Risposta corretta - ${answer}`);
+            } else {
+                document.getElementById("resultMessage").innerText = "Risposta sbagliata, prova ancora!";
+                history.push(`Stanza ${currentRoom}: Risposta sbagliata - ${answer}`);
+                penalizeTime();
+            }
+        }
+
+        // Penalizzare il tempo in caso di risposta sbagliata
+        function penalizeTime() {
+            timer -= 30; // Ridurre 30 secondi dal timer
+            if (timer < 0) timer = 0;
+        }
+
+        // Funzione per passare alla stanza successiva
+        function nextRoom() {
+            currentRoom++;
+            if (currentRoom > 5) {
+                endGame("Congratulazioni! Hai completato l'escape room!");
+            } else {
+                loadNextRoom();
+            }
+        }
+
+        // Funzione per caricare la stanza successiva
+        function loadNextRoom() {
+            document.getElementById("nextButton").style.display = "none";
+            document.getElementById("answerInput").value = "";
+            document.getElementById("resultMessage").innerText = "";
+
+            // Domande delle stanze
+            if (currentRoom === 2) {
+                document.getElementById("question").innerText = "Quanto fa 9 + 7?";
+            } else if (currentRoom === 3) {
+                document.getElementById("question").innerText = "Qual è la capitale del Giappone?";
+            } else if (currentRoom === 4) {
+                document.getElementById("question").innerText = "Completa la sequenza: 2, 4, 8, 16, ___ ?";
+            } else if (currentRoom === 5) {
+                document.getElementById("question").innerText = "Chi ha scritto 'Il Gattopardo'?";
+            }
+
+            updateHistory();
+        }
+
+        // Funzione per aggiornare la cronologia delle risposte
+        function updateHistory() {
+            document.getElementById("history").innerHTML = history.map(entry => `<p>${entry}</p>`).join('');
+        }
+
+        // Funzione per ottenere la risposta corretta
+        function getCorrectAnswer() {
+            if (currentRoom === 2) return ["16"];
+            if (currentRoom === 3) return ["tokyo"];
+            if (currentRoom === 4) return ["32"];
+            if (currentRoom === 5) return ["giuseppe tomasi di lampedusa", "tomasi di lampedusa"];
+            return [];
+        }
+
+        // Funzione per mostrare un suggerimento
+        function showHint() {
+            const hints = [
+                "La risposta alla domanda di matematica è un numero.",
+                "La capitale del Giappone è una città famosa.",
+                "La sequenza è una progressione geometrica.",
+                "L'autore del libro è un aristocratico siciliano."
+            ];
+            alert(hints[currentRoom - 1]);
+        }
+
+        // Funzione per uscire dal gioco
+        function exitGame() {
+            location.reload(); // Ricarica la pagina per ricominciare il gioco
+        }
+
+        // Inizializza il gioco
+        startTimer();
+        loadNextRoom();
+    </script>
+
+</body>
+</html>
